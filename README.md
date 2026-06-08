@@ -1,97 +1,129 @@
-# 🎵 FLAC → WAV Converter
-High-performance batch audio converter from **FLAC** to **WAV** with metadata and cover preservation.  
-Built in **Python**, powered by **FFmpeg**, supports **multithreaded** processing.
+# FLAC to WAV Converter
 
-## ✨ Features
+A small Python command-line utility for recursively converting FLAC audio files to WAV with FFmpeg.
 
-- 🔍 Automatic bit-depth detection via `ffprobe`
-- 🎧 Correct PCM codec selection (`pcm_s16le`, `pcm_s24le`, `pcm_s32le`)
-- 📝 Metadata preservation — all FLAC tags copied into the WAV file
-- 🖼 Embedded cover extraction (saved as .jpg)
-- 🚀 Multithreaded batch processing using `ThreadPoolExecutor`
-- 📁 Recursive scanning for .flac files
-- 💾 Auto-generated output folder (`<your_folder>.wav/`)
-- 🛡 Error handling for corrupted files, missing ffmpeg, metadata issues
-- 🖥 Cross‑platform: macOS, Linux, Windows
+The code converts **FLAC to WAV**. The current GitHub repository name is inconsistent with that direction and should be renamed in the GitHub UI.
 
-## 📦 Requirements
+## Features
 
-- Python 3.8+
-- FFmpeg & FFprobe installed  
-  macOS: `brew install ffmpeg`  
-  Ubuntu: `sudo apt install ffmpeg`  
-  Windows: https://ffmpeg.org/download.html
+- Recursive FLAC file discovery
+- Parallel conversion with a configurable worker count
+- WAV codec selection based on detected source bit depth
+- Metadata forwarding through FFmpeg arguments
+- Best-effort extraction of embedded artwork
+- Preserved input subdirectory structure
+- Dry-run mode for validating planned output
+- Non-zero exit status when conversion fails
 
-## 🛠 Installation
+## Requirements
 
-```
-git clone https://github.com/yourname/flac2wav
-cd flac2wav
+- Python 3.9+
+- FFmpeg
+- FFprobe
+
+Install FFmpeg on macOS:
+
+```bash
+brew install ffmpeg
 ```
 
-Optional:
+Install FFmpeg on Debian/Ubuntu:
 
-```
-chmod +x flac2wav.py
-```
-
-## ▶️ Usage
-
-```
-python3 flac2wav.py <folder_with_flac_files>
+```bash
+sudo apt install ffmpeg
 ```
 
-Example:
+Verify the tools:
 
-```
-python3 flac2wav.py ~/Music/FLAC_Collection
-```
-
-Output folder will be:
-
-```
-~/Music/FLAC_Collection.wav/
+```bash
+ffmpeg -version
+ffprobe -version
 ```
 
-Containing both `.wav` files and extracted `.jpg` covers.
+## Installation
 
-## 📁 Output Example
-
-```
-MyAlbum/
-├── track1.flac
-├── track2.flac
-└── cover.jpg
-
-MyAlbum.wav/
-├── track1.wav
-├── track1.jpg
-├── track2.wav
-└── track2.jpg
+```bash
+git clone https://github.com/tghnx1/From-WAV-to-FLAC-converter.git
+cd From-WAV-to-FLAC-converter
 ```
 
-## ⚙️ Code Overview
+No Python package dependencies are required for normal use.
 
-- `check_ffmpeg()` — validates ffmpeg presence
-- `get_bit_depth()` — determines audio bit depth
-- `extract_metadata()` — collects metadata tags
-- `extract_cover()` — extracts and writes album art
-- `convert_file()` — executes full FLAC → WAV pipeline
-- `ThreadPoolExecutor` — parallel batch conversion
+## Usage
 
-## 🧪 Example Output
+Convert a directory:
 
-```
-▶️ Found FLAC: 42. Converting into /Users/me/Music/Collection.wav
-🖼️  Cover: track1.jpg
-✅ track1.wav (pcm_s24le)
-🖼️  Cover: track2.jpg
-✅ track2.wav (pcm_s24le)
-🎉 Done. All files and covers processed successfully.
+```bash
+python3 flac2wav.py ~/Music/FLAC
 ```
 
-## 📄 License
-MIT
+Choose an output directory:
 
-## 🙌 Author
-GitHub: @tghnx1
+```bash
+python3 flac2wav.py ~/Music/FLAC --output-dir ~/Music/WAV
+```
+
+Limit parallel work:
+
+```bash
+python3 flac2wav.py ~/Music/FLAC --workers 4
+```
+
+Preview conversions without running FFmpeg:
+
+```bash
+python3 flac2wav.py ~/Music/FLAC --dry-run
+```
+
+By default, output is written to `<input-directory>.wav`.
+
+## Input and output
+
+```text
+FLAC/
+  Album A/
+    track01.flac
+    track02.flac
+
+FLAC.wav/
+  Album A/
+    track01.wav
+    track01.jpg
+    track02.wav
+```
+
+Artwork files are created only when FFmpeg can extract an embedded image.
+
+## Error handling
+
+- Missing input directories and invalid worker counts return exit code `2`.
+- Missing FFmpeg or FFprobe returns exit code `2`.
+- A directory containing no FLAC files returns exit code `1`.
+- Failed individual conversions are reported and produce a final non-zero exit status.
+
+## Tests
+
+Pure helper functions are covered with pytest:
+
+```bash
+python3 -m pip install pytest
+pytest -q
+```
+
+For an end-to-end validation, run the tool against a small test directory and inspect the result with `ffprobe`:
+
+```bash
+python3 flac2wav.py ./sample-flac --output-dir ./sample-wav
+ffprobe ./sample-wav/example.wav
+```
+
+## Limitations
+
+- Metadata support in WAV players varies.
+- Embedded artwork extraction is best effort.
+- Existing output files are overwritten.
+- Audio conversion behavior depends on the installed FFmpeg version.
+
+## Status
+
+Small utility project. The CLI and helper tests provide a clean base for further validation without turning it into a larger application.
